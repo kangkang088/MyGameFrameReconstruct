@@ -1,17 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public class Test2Mgr : SingletonMono<Test2Mgr> {
+public class Test2Mgr : SingletonMono<Test2Mgr>
+{
     private int i;
-    public void TestLog() {
-        print("Test2Mgr");
-        print(i);
-    }
-    protected override void Awake() {
-        //重写Awake时，不能省略这一句
+
+    protected override void Awake()
+    {
         base.Awake();
         i = 10;
+    }
+
+    public void TestLog()
+    {
+        Debug.Log("Test2Mgr" + i);
     }
 }
