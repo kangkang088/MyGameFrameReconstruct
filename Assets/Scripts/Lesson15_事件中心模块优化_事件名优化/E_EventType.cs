@@ -2,9 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Lesson6 : MonoBehaviour
+public enum E_EventType
 {
-    private void Start() {
-        
-    }
+    E_Monster_Dead,
+    E_Player_GetReward,
 }
