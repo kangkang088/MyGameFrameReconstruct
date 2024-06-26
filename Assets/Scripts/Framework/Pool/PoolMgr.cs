@@ -77,7 +77,7 @@ public class PoolData
 
         return obj;
     }
-    
+
     /// <summary>
     /// 往抽屉放回对象
     /// </summary>
@@ -103,6 +103,30 @@ public class PoolData
     }
 }
 
+/// <summary>
+/// 想要被复用的数据结构类和逻辑类，必须继承这个接口
+/// </summary>
+public interface IPoolObject
+{
+    /// <summary>
+    /// 重置数据的方法，保证当对象被放进池子后，数据重置，防止再次取出后遗留上一次的数据
+    /// </summary>
+    void ResetInfo();
+}
+
+public abstract class PoolObjectBase
+{
+}
+
+/// <summary>
+/// 存储 数据结构类和逻辑类(不继承Mono的类) 的容器类
+/// </summary>
+/// <typeparam name="T">类的类型</typeparam>
+public class PoolObject<T> : PoolObjectBase where T : class
+{
+    public Queue<T> poolObjects = new();
+}
+
 public class PoolMgr : BaseManager<PoolMgr>
 {
     public static bool isOpenLayout = true;
@@ -115,9 +139,14 @@ public class PoolMgr : BaseManager<PoolMgr>
     private GameObject poolObj;
 
     /// <summary>
-    /// 柜子容器Dictionary，抽屉容器Stack，存储对象GameObject
+    /// 柜子容器Dictionary，抽屉容器PoolData中的Stack，存储对象GameObject，继承Mono的
     /// </summary>
-    private Dictionary<string,PoolData> poolDic = new Dictionary<string,PoolData>();
+    private Dictionary<string,PoolData> poolDic = new();
+
+    /// <summary>
+    /// 柜子容器Dictionary，抽屉容器PoolObject中的Queue，存储逻辑类和数据结构类，不继承Mono的
+    /// </summary>
+    private Dictionary<string,PoolObjectBase> poolObjectDic = new();
 
     /// <summary>
     /// 从缓存池（柜子）取对象的方法
@@ -131,7 +160,9 @@ public class PoolMgr : BaseManager<PoolMgr>
             poolObj = new GameObject("Pool");
 
         GameObject obj;
+
         #region 没有加入上限时的逻辑
+
         ////直接拿：有抽屉并且抽屉里面有对象
         //if(poolDic.ContainsKey(name) && poolDic[name].Count > 0)
         //{
@@ -143,9 +174,11 @@ public class PoolMgr : BaseManager<PoolMgr>
         //    obj = Object.Instantiate(Resources.Load<GameObject>(name));
         //    obj.name = name;
         //}
-        #endregion
+
+        #endregion 没有加入上限时的逻辑
 
         #region 加入了上限后的逻辑
+
         //1.没有抽屉
         //if(!poolDic.ContainsKey(name))
         //{
@@ -167,9 +200,11 @@ public class PoolMgr : BaseManager<PoolMgr>
         //    记录正在使用的对象
         //    poolDic[name].PushUsedList(obj);
         //}
-        #endregion
+
+        #endregion 加入了上限后的逻辑
 
         #region 加入了上限后的逻辑(优化)
+
         //1.没有抽屉 || 3.抽屉里面没对象并且使用中的对象也没超过上限
         if(!poolDic.ContainsKey(name) || (poolDic[name].Count == 0 && poolDic[name].NeedCreate))
         {
@@ -186,9 +221,79 @@ public class PoolMgr : BaseManager<PoolMgr>
         {
             obj = poolDic[name].Pop();
         }
-        #endregion
+
+        #endregion 加入了上限后的逻辑(优化)
 
         return obj;
+    }
+
+    /// <summary>
+    /// 获取自定义数据结构类和逻辑类对象
+    /// </summary>
+    /// <typeparam name="T">数据类型</typeparam>
+    /// <param name="nameSpace">命名空间</param>
+    /// <returns>类对象</returns>
+    public T GetObj<T>(string nameSpace = "") where T : class, IPoolObject, new()
+    {
+        //池子名规定：命名空间名 + _ + 类名
+        string poolName = nameSpace + "_" + typeof(T).Name;
+
+        //有池子
+        if(poolObjectDic.ContainsKey(poolName))
+        {
+            PoolObject<T> pool = poolObjectDic[poolName] as PoolObject<T>;
+            //池子中受否有可以复用的内容
+            if(pool.poolObjects.Count > 0)
+            {
+                T obj = pool.poolObjects.Dequeue();
+                return obj;
+            }
+            else
+            {
+                T obj = new();
+                return obj;
+            }
+        }
+        //没有池子
+        else
+        {
+            T obj = new();
+            return obj;
+        }
+    }
+
+    /// <summary>
+    /// 将自定义数据结构类和逻辑类放入池子
+    /// </summary>
+    /// <typeparam name="T">数据类型</typeparam>
+    /// <param name="obj">对象</param>
+    /// <param name="nameSpace">命名空间</param>
+    public void PushObj<T>(T obj,string nameSpace = "") where T : class, IPoolObject
+    {
+        //不允许压入空对象
+        if(obj == null)
+            return;
+
+        //池子名规定：命名空间名 + _ + 类名
+        string poolName = nameSpace + "_" + typeof(T).Name;
+
+        PoolObject<T> pool;
+
+        //有池子
+        if(poolObjectDic.ContainsKey(poolName))
+        {
+            pool = poolObjectDic[poolName] as PoolObject<T>;
+        }
+        //没有池子
+        else
+        {
+            pool = new();
+            poolObjectDic.Add(poolName,pool);
+        }
+
+        //放入池子之前，先重置数据
+        obj.ResetInfo();
+        pool.poolObjects.Enqueue(obj);
     }
 
     /// <summary>
@@ -198,10 +303,12 @@ public class PoolMgr : BaseManager<PoolMgr>
     public void PushObj(GameObject obj)
     {
         #region 被优化
+
         //obj.SetActive(false);
         ////建立父子关系
         //obj.transform.SetParent(poolObj.transform);
-        #endregion
+
+        #endregion 被优化
 
         //因为要记录抽屉中使用中的对象，所以抽屉不在这里创建，必须在取对象（没有就创建）的情况下创建抽屉并记录
 
@@ -211,6 +318,7 @@ public class PoolMgr : BaseManager<PoolMgr>
         poolDic[obj.name].Push(obj);
 
         #region 被优化
+
         ////直接放：有name抽屉
         //if(poolDic.ContainsKey(name))
         //{
@@ -222,7 +330,8 @@ public class PoolMgr : BaseManager<PoolMgr>
         //    poolDic.Add(name,new Stack<GameObject>());
         //    poolDic[name].Push(obj);
         //}
-        #endregion
+
+        #endregion 被优化
     }
 
     /// <summary>
@@ -232,5 +341,7 @@ public class PoolMgr : BaseManager<PoolMgr>
     {
         poolDic.Clear();
         poolObj = null;
+
+        poolObjectDic.Clear();
     }
 }

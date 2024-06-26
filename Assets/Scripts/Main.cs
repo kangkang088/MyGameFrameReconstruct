@@ -77,22 +77,56 @@ public class Main : MonoBehaviour
         //    Instantiate(res).name = "ABResMgr Create(Editor Mode)";
         //});
 
-        UIManager.Instance.ShowPanel<BeginPanel>(E_UILayer.Middle,(panel) =>
+        UIMgr.Instance.ShowPanel<BeginPanel>(E_UILayer.Middle,(panel) =>
         {
             print("The first show.");
         });
 
-        UIManager.Instance.HidePanel<BeginPanel>();
+        UIMgr.Instance.HidePanel<BeginPanel>();
 
-        UIManager.Instance.ShowPanel<BeginPanel>(E_UILayer.Middle,(panel) =>
+        UIMgr.Instance.ShowPanel<BeginPanel>(E_UILayer.Middle,(panel) =>
         {
             print("The second show.");
         });
 
-        UIManager.Instance.GetPabnel<BeginPanel>((panel) =>
+        UIMgr.Instance.GetPabnel<BeginPanel>((panel) =>
         {
             print("Get Panel.");
         });
+
+        InputMgr.Instance.OpenOrCloseInputManager(true);
+
+        InputMgr.Instance.ChangeKeyboardInfo(E_EventType.E_Input_Skill1,KeyCode.J,InputInfo.E_InputType.Down);
+        InputMgr.Instance.ChangeKeyboardInfo(E_EventType.E_Input_Skill2,KeyCode.K,InputInfo.E_InputType.Up);
+        InputMgr.Instance.ChangeMouseInfo(E_EventType.E_Input_Skill3,0,InputInfo.E_InputType.Down);
+
+        EventCenter.Instance.AddListener(E_EventType.E_Input_Skill1,Skill1);
+
+        EventCenter.Instance.AddListener(E_EventType.E_Input_Skill2,Skill2);
+
+        EventCenter.Instance.AddListener(E_EventType.E_Input_Skill3,Skill3);
+
+        EventCenter.Instance.AddListener<float>(E_EventType.E_InputHotKey_Horizontal,CheckHorizontalHotKey);
+    }
+
+    private void Skill3()
+    {
+        print("Skill3");
+    }
+
+    private void Skill2()
+    {
+        print("Skill2");
+    }
+
+    private void Skill1()
+    {
+        print("Skill1");
+    }
+
+    private void CheckHorizontalHotKey(float value)
+    {
+        print(value);
     }
 
     private IEnumerator TestFunc()
@@ -131,7 +165,7 @@ public class Main : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.S))
         {
-            UIManager.Instance.ShowPanel<BeginPanel>(E_UILayer.Middle,(panel) =>
+            UIMgr.Instance.ShowPanel<BeginPanel>(E_UILayer.Middle,(panel) =>
             {
                 print("S");
             });
@@ -139,9 +173,33 @@ public class Main : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.H))
         {
-            UIManager.Instance.HidePanel<BeginPanel>(true);
+            UIMgr.Instance.HidePanel<BeginPanel>(true);
+        }
+
+        if(Input.GetKeyDown(KeyCode.C))
+        {
+            InputMgr.Instance.GetInputInfo((inputInfo) =>
+            {
+                if(inputInfo.keyboardOrMouse == InputInfo.E_KeyboardOrMouse.Keyboard)
+                {
+                    print(inputInfo.keyCode);
+                }
+            });
+        }
+
+        if(Input.GetKeyDown(KeyCode.V)) 
+        {
+            timerID = TimerMgr.Instance.CreateTimer(false, 5000,() =>
+            {
+                print("Timer Over.");
+            },1000,() =>
+            {
+                print("Interval");
+            });
         }
     }
+    private int timerID;
+
 
     private void TestFunc(GameObject obj)
     {

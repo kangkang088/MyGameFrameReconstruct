@@ -3,7 +3,6 @@ using UnityEngine.Events;
 
 public abstract class EventInfoBase
 {
-    
 }
 
 public class EventInfo<T> : EventInfoBase
@@ -74,6 +73,7 @@ public class EventCenter : BaseManager<EventCenter>
             eventDic.Add(eventName,new EventInfo<T>(action));
         }
     }
+
     public void AddListener(E_EventType eventName,UnityAction action)
     {
         if(eventDic.ContainsKey(eventName))
@@ -96,6 +96,7 @@ public class EventCenter : BaseManager<EventCenter>
         if(eventDic.ContainsKey(eventName))
             (eventDic[eventName] as EventInfo<T>).actions -= action;
     }
+
     public void RemoveListener(E_EventType eventName,UnityAction action)
     {
         if(eventDic.ContainsKey(eventName))

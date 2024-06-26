@@ -11,7 +11,7 @@ public enum E_UILayer
 /// <summary>
 /// UI管理器，管理所有面板  规则：面板预设体和面板类名一致
 /// </summary>
-public class UIManager : BaseManager<UIManager>
+public class UIMgr : BaseManager<UIMgr>
 {
     private abstract class BasePanelInfo
     {
@@ -43,7 +43,7 @@ public class UIManager : BaseManager<UIManager>
     //存储所有面板的容器
     private Dictionary<string,BasePanelInfo> panelDic = new();
 
-    private UIManager()
+    private UIMgr()
     {
         //动态创建UI摄像机
         uiCamera = Object.Instantiate(ResMgr.Instance.Load<GameObject>("UI/UICamera")).GetComponent<Camera>();
@@ -125,7 +125,6 @@ public class UIManager : BaseManager<UIManager>
                 //如果是失活状态，直接激活面板就可以了
                 if(!panelInfo.panel.gameObject.activeSelf)
                     panelInfo.panel.gameObject.SetActive(true);
-
                 panelInfo.panel.ShowMe();
                 callback?.Invoke(panelInfo.panel);
             }
@@ -194,7 +193,6 @@ public class UIManager : BaseManager<UIManager>
                 else
                     //不销毁，只是失活，下次再显示就直接复用
                     panelInfo.panel.gameObject.SetActive(false);
-                
             }
         }
     }
@@ -225,5 +223,23 @@ public class UIManager : BaseManager<UIManager>
                 callback?.Invoke(panelInfo.panel);
             }
         }
+    }
+
+    /// <summary>
+    /// 为控件添加自定义事件
+    /// </summary>
+    /// <param name="control">控件对象</param>
+    /// <param name="type">事件类型</param>
+    /// <param name="callback">事件触发回调函数</param>
+    public static void AddCustomEventListener(UIBehaviour control,EventTriggerType type,UnityAction<BaseEventData> callback)
+    {
+        //保证空间上只会有一个EventTrigger
+        EventTrigger trigger = control.GetComponent<EventTrigger>() ?? control.gameObject.AddComponent<EventTrigger>();
+
+        EventTrigger.Entry entry = new EventTrigger.Entry();
+        entry.eventID = type;
+        entry.callback.AddListener(callback);
+
+        trigger.triggers.Add(entry);
     }
 }

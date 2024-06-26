@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
@@ -9,7 +6,9 @@ using UnityEngine.Events;
 public class MonoMgr : SingletonAutoMono<MonoMgr>
 {
     private event UnityAction fixedUpdateEvent;
+
     private event UnityAction updateEvent;
+
     private event UnityAction lateUpdateEvent;
 
     public void AddFixedUpdateListener(UnityAction action)
@@ -26,6 +25,7 @@ public class MonoMgr : SingletonAutoMono<MonoMgr>
     {
         lateUpdateEvent += action;
     }
+
     public void RemoveFixedUpdateListener(UnityAction action)
     {
         fixedUpdateEvent -= action;
