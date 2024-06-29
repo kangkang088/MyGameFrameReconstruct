@@ -164,6 +164,51 @@ public class TextUtil
         return value.ToString($"F{len}");
     }
 
+    /// <summary>
+    /// 将大数据转换为指定格式的字符串
+    /// </summary>
+    /// <param name="num"></param>
+    /// <returns></returns>
+    public static string GetStrOfTheBigDataAndNumber(int num)
+    {
+        //大于一亿，显示n亿n千万
+        if(num >= 100000000)
+        {
+            return BigDataAndNumberChange(num,100000000,"亿","千万");
+        }
+        //大于一万，显示n万n千
+        else if(num >= 10000)
+        {
+            return BigDataAndNumberChange(num,10000,"万","千");
+        }
+        //显示原数字
+        else
+            return num.ToString();
+    }
+
+    /// <summary>
+    /// 转换大数据
+    /// </summary>
+    /// <param name="num">大数值</param>
+    /// <param name="company">数值分割基数</param>
+    /// <param name="bigCompany">大单位</param>
+    /// <param name="littleCompany">小单位</param>
+    /// <returns></returns>
+    private static string BigDataAndNumberChange(int num,int company,string bigCompany,string littleCompany)
+    {
+        resultStr.Clear();
+        resultStr.Append(num / company);
+        resultStr.Append(bigCompany);
+        int tempNumber = num % company;
+        tempNumber /= (company / 10);
+        if(tempNumber != 0)
+        {
+            resultStr.Append(tempNumber);
+            resultStr.Append(littleCompany);
+        }
+        return resultStr.ToString();
+    }
+
     #endregion 数字转字符串相关
 
     #region 时间转换相关
@@ -175,34 +220,38 @@ public class TextUtil
     /// </summary>
     /// <param name="s">秒数</param>
     /// <param name="ignoreZero">是否忽略0</param>
-    /// <param name="hourStr"></param>
-    /// <param name="minuteStr"></param>
-    /// <param name="secondStr"></param>
+    /// <param name="isKeepLen">是否至少保留两位</param>
+    /// <param name="hourStr">小时的拼接字符</param>
+    /// <param name="minuteStr">分钟拼接字符</param>
+    /// <param name="secondStr">秒数拼接字符</param>
     /// <returns></returns>
-    public static string SecondToHMS(int s,bool ignoreZero = false,string hourStr = "时",string minuteStr = "分",string secondStr = "秒")
+    public static string SecondToHMS(int s,bool ignoreZero = false,bool isKeepLen = false,string hourStr = "时",string minuteStr = "分",string secondStr = "秒")
     {
+        if(s < 0)
+            s = 0;
+
         //计算小时
         int hour = s / 3600;
         //计算分钟
         int second = s % 3600;
-        int minute = s / 60;
+        int minute = second / 60;
         //计算秒
         second = s % 60;
 
         resultStr.Clear();
         if(hour != 0 || !ignoreZero)
         {
-            resultStr.Append(hour);
+            resultStr.Append(isKeepLen ? GetStrOfNumber(hour,2) : hour);
             resultStr.Append(hourStr);
         }
         if(minute != 0 || !ignoreZero || hour != 0)
         {
-            resultStr.Append(minute);
+            resultStr.Append(isKeepLen ? GetStrOfNumber(minute,2) : minute);
             resultStr.Append(minuteStr);
         }
         if(second != 0 || !ignoreZero || hour != 0 || minute != 0)
         {
-            resultStr.Append(second);
+            resultStr.Append(isKeepLen ? GetStrOfNumber(second,2) : second);
             resultStr.Append(secondStr);
         }
 
@@ -213,6 +262,17 @@ public class TextUtil
         }
 
         return resultStr.ToString();
+    }
+
+    /// <summary>
+    /// 秒转00：00：00
+    /// </summary>
+    /// <param name="s"></param>
+    /// <param name="ignoreZero"></param>
+    /// <returns></returns>
+    public static string SecontToHMSNormal(int s,bool ignoreZero = false)
+    {
+        return SecondToHMS(s,ignoreZero,true,":",":","");
     }
 
     #endregion 时间转换相关
